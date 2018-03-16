@@ -10,18 +10,17 @@ import java.util.regex.Pattern;
 public class WordCount {
 
     class Arg { // 解析参数列表所需类
-        public char flag;
-        public String content;
+        public char flag; // 表示操作 例如"a"/"l"/"w"/"c"
+        public String content; // 表示带操作的文件名 例如"stop.txt"
 
         public Arg(char flag, String content) {
             this.flag = flag;
             this.content = content;
         }
 
-        public boolean isCWL() {
+        public boolean isCWL() { // 用来标明是否是简单操作
             return "cwl".indexOf(flag) != -1;
         }
-
     }
 
     public static void main(String[] args) {
@@ -31,13 +30,13 @@ public class WordCount {
     private final List<Arg> argList = new ArrayList<>(); // 解析后的列表
 
     private void start(String[] args) { // 主函数
-        parseArgs(args);
+        parseArgs(args); // 将args参数列表解析为Arg的list，方便后续操作
 
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder(); // 用来存储将要写入至结果文件的String
 
-        for (int i = argList.size() - 1; i >= 0; --i) {
+        for (int i = argList.size() - 1; i >= 0; --i) { // 将每一个Arg的文件名补齐
             Arg arg = argList.get(i);
-            if (arg.isCWL()) {
+            if (arg.isCWL()) { // 判断是否为合法输入
                 if (arg.content.isEmpty()) {
                     throw new RuntimeException("Flag " + arg.flag + " doesn't have file specified.");
                 } else {
@@ -52,9 +51,9 @@ public class WordCount {
             }
         }
 
-        boolean recursive = findArg('s') != null;
+        boolean recursive = findArg('s') != null; // 是否包含遍历标示
 
-        {
+        { // 执行计算String字符数的操作
             Arg arg = findArg('c');
             if (arg != null) {
                 for (String path : findFiles(arg.content, recursive)) {
@@ -63,7 +62,7 @@ public class WordCount {
                 }
             }
         }
-        {
+        { // 执行计算String单词数的操作
             Arg arg = findArg('w');
             Arg arg1 = findArg('e');
 
@@ -83,7 +82,7 @@ public class WordCount {
                 }
             }
         }
-        {
+        { // 执行计算String行数的操作
             Arg arg = findArg('l');
             if (arg != null) {
                 for (String path : findFiles(arg.content, recursive)) {
@@ -93,7 +92,7 @@ public class WordCount {
                 }
             }
         }
-        {
+        { // 执行计算String复杂行数的操作
             Arg arg = findArg('a');
             if (arg != null) {
                 for (String path : findFiles(arg.content, recursive)) {
@@ -113,7 +112,7 @@ public class WordCount {
                 }
             }
         }
-        {
+        { // 执行将结果写入指定文件的操作
             Arg arg = findArg('o');
             String filename = arg == null ? "result.txt" : arg.content;
             try (FileWriter fout = new FileWriter(filename)) {
@@ -125,11 +124,12 @@ public class WordCount {
     }
 
     private void parseArgs(String[] args) { // 解析参数
+        // 采用状态机，开始状态为0状态，获取到 - 进入1状态，接收到合法输入则存储起来，否则跳回状态0
         int state = 0;
         char readFlag = '\0';
         for (int i = 0; i < args.length; ++i) {
             String cur = args[i];
-            boolean isFlag = cur.length() == 2 && cur.charAt(0) == '-';
+            boolean isFlag = cur.length() == 2 && cur.charAt(0) == '-'; // 是否为 -* 格式
             if (state == 0 && !isFlag) {
                 throw new RuntimeException("Can't parse argument " + cur);
             } else if (state == 0) {
@@ -149,12 +149,12 @@ public class WordCount {
             argList.add(new Arg(readFlag, ""));
     }
 
-    private List<String> findFiles(String filter, boolean recursive) {
+    private List<String> findFiles(String filter, boolean recursive) { // 查询对应格式的文件并将文件名转为标准格式
         filter = filter.replace(".", "\\.").replace("*", ".*");
         return findFiles("./", Pattern.compile(filter), recursive);
     }
 
-    private List<String> findFiles(String basePath, Pattern filter, boolean recursive) {
+    private List<String> findFiles(String basePath, Pattern filter, boolean recursive) { // 匹配目录下的文件
         List<String> ret = new ArrayList<>();
         for (File f : new File(basePath).listFiles()) {
             if (f.isDirectory()) {

@@ -1,0 +1,1 @@
+wordcounttest.txt 行数: 3
